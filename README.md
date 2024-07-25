@@ -2,7 +2,7 @@
 
 **Git Granary** is a [Git Large File Storage](https://git-lfs.com) (LFS) server implementation written in TypeScript (sorry).
 
-Git Granary was designed for self-hosted personal use.
+Git Granary was designed for self-hosted personal use. See my [introduction blog post](https://dbushell.com/2024/07/25/git-granary/).
 
 ⚠️ Work in progress! ⚠️
 
