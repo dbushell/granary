@@ -1,0 +1,16 @@
+{
+  "tasks": {
+    "dev": "deno run --allow-all --watch main.ts",
+    "deno": "deno run --allow-env --allow-net --allow-read --allow-write main.ts",
+    "bun": "bun run main.ts",
+    "node": "npx tsx main.ts"
+  },
+  "imports": {
+    "@dbushell/jsonlike": "jsr:@dbushell/jsonlike@0.2",
+    "@std/crypto": "jsr:@std/crypto@1.0",
+    "@std/dotenv": "jsr:@std/dotenv@0.225",
+    "@std/encoding": "jsr:@std/encoding@1.0",
+    "@std/fs": "jsr:@std/fs@0.229",
+    "@std/http": "jsr:@std/http@0.224"
+  }
+}

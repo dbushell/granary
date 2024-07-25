@@ -1,0 +1,12 @@
+/*
+!.gitignore
+!LICENSE
+!README.md
+!.env.example
+!.npmrc
+!deno.json
+!package.json
+!*.ts
+!src
+src/**/*.*
+!src/**/*.ts
