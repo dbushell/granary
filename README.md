@@ -39,7 +39,7 @@ See the [Git LFS documentation](https://github.com/git-lfs/git-lfs/blob/main/doc
 
 Git Granary is coded with cross-runtime JavaScript where possible. Adapters are used for runtime specific APIs like filesystem access and HTTP servers.
 
-Deno is the primary full featured implementation. Bun and Node and adapters are minimum viable implementations.
+Deno is the primary full featured implementation. Bun and Node adapters are minimum viable implementations.
 
 ## Notes
 

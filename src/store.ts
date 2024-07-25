@@ -12,7 +12,7 @@ import {joinURL} from './utils.ts';
  */
 export class BatchStore {
   #store: Map<string, BatchResponseObject>;
-  #dates: WeakMap<BatchResponseObject, Date>;
+  #dates: Map<string, Date>;
 
   /** Action expiry duration (in seconds) */
   static EXPIRES_IN = 3600;
@@ -20,7 +20,7 @@ export class BatchStore {
   /** Create new store */
   constructor() {
     this.#store = new Map();
-    this.#dates = new WeakMap();
+    this.#dates = new Map();
   }
 
   /** Returns `true` if store has unexpired key */
@@ -36,12 +36,13 @@ export class BatchStore {
   /** Store object for fixed period before it expires */
   set(key: string, object: BatchResponseObject) {
     this.#store.set(key, object);
-    this.#dates.set(object, new Date());
+    this.#dates.set(key, new Date());
     setTimeout(() => this.delete(key), BatchStore.EXPIRES_IN * 1000);
   }
 
   /** Remove stored object (returns `true` if existed) */
   delete(key: string): boolean {
+    this.#dates.delete(key);
     return this.#store.delete(key);
   }
 
@@ -51,12 +52,12 @@ export class BatchStore {
     if (!object || !('actions' in object)) {
       return true;
     }
-    const date = this.#dates.get(object);
+    const date = this.#dates.get(key);
     const ellapsed = (Date.now() - (date?.getTime() ?? 0)) / 1000;
     const expires_in = Object.values(object.actions).at(0)?.expires_in ?? 0;
     const expired = ellapsed >= expires_in;
     if (expired) {
-      this.#store.delete(key);
+      this.delete(key);
     }
     return expired;
   }
