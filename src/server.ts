@@ -27,11 +27,13 @@ export class BatchServer {
   #origin: URL;
   #username: string;
   #password: string;
+  #webgui: boolean;
 
   constructor(options: BatchServerOptions) {
     this.#adapter = options.adapter;
     this.#username = options.username ?? "";
     this.#password = options.password ?? "";
+    this.#webgui = Boolean(options.webgui ?? false);
     this.#store = new BatchStore();
     this.#url = options.url;
     // Differs if behind HTTPS proxy
@@ -72,6 +74,11 @@ export class BatchServer {
       ) {
         return new Response(null, { status: 404 });
       }
+    }
+
+    // Handle web preview
+    if (this.#webgui && this.#adapter.web && url.pathname === "/") {
+      return this.#web(request);
     }
 
     // Handle Batch API
@@ -262,5 +269,56 @@ export class BatchServer {
     }
 
     return jsonResponse(404, { message: "Object not found" });
+  }
+
+  /** Handle web requests to root */
+  async #web(request: Request): Promise<Response> {
+    // Validate basic HTTP auth
+    const credentials = parseAuthorization(request);
+    if (
+      credentials?.username !== this.#username ||
+      credentials?.password !== this.#password
+    ) {
+      return new Response(null, {
+        status: 401,
+        headers: {
+          "www-authenticate": "Basic",
+        },
+      });
+    }
+
+    // Ignore non-HTML requests
+    const acceptErr = acceptError(request, "text/html");
+    if (acceptErr) return acceptErr;
+
+    // Return streamed HTML
+    const aborter = new AbortController();
+    const adapter = this.#adapter!;
+    const fsRoot = this.#fsRoot;
+
+    return new Response(
+      new ReadableStream({
+        async start(controller) {
+          const encoder = new TextEncoder();
+          for await (
+            const chunk of adapter.web!(new URL(request.url), fsRoot.pathname)
+          ) {
+            if (aborter.signal.aborted) break;
+            controller.enqueue(encoder.encode(chunk));
+          }
+          controller.close();
+        },
+        cancel() {
+          aborter.abort();
+        },
+      }),
+      {
+        status: 200,
+        headers: {
+          "cache-control": "no-store",
+          "content-type": "text/html; charset=utf-8",
+        },
+      },
+    );
   }
 }

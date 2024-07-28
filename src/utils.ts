@@ -1,3 +1,14 @@
+import { escape } from "@std/html";
+
+/** Template literal tag to escape HTML */
+export const HTML = (parts: TemplateStringsArray, ...props: Array<unknown>) => {
+  let escaped = "";
+  for (let i = 0; i < parts.length; i++) {
+    escaped += parts[i] + escape(String(props.at(i) ?? ""));
+  }
+  return escaped + "\n";
+};
+
 /**
  * Append `pathname` to `base` URL and normalise slashes
  * @todo fix for Windows? (used for file paths too.)
