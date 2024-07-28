@@ -68,6 +68,9 @@ export interface BatchAdapter {
 
   /** Handle upload request */
   upload(object: LFSFile, request: Request): Promise<Response>;
+
+  /** Handle web GUI <body> content */
+  web?(url: URL, fsRoot: string): AsyncGenerator<string>;
 }
 
 /** Server configuration options */
@@ -78,4 +81,5 @@ export interface BatchServerOptions {
   origin?: URL;
   username?: string;
   password?: string;
+  webgui?: boolean;
 }

@@ -11,6 +11,7 @@
     "@std/dotenv": "jsr:@std/dotenv@0.225",
     "@std/encoding": "jsr:@std/encoding@1.0",
     "@std/fs": "jsr:@std/fs@0.229",
+    "@std/html": "jsr:@std/html@1.0",
     "@std/http": "jsr:@std/http@0.224"
   }
 }
