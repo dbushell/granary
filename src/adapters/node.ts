@@ -72,7 +72,7 @@ export const getConfig = () => {
   const url = new URL(`http://${hostname}`);
   if (port) url.port = port;
 
-  let origin = undefined;
+  let origin: URL | undefined = undefined;
   if (process.env.GGLFS_ORIGIN) {
     origin = new URL(process.env.GGLFS_ORIGIN);
   }
@@ -83,7 +83,7 @@ export const getConfig = () => {
 /** Node server entry point */
 export const main = async () => {
   // Load polyfill if not supported natively
-  if (!globalThis.URLPattern) {
+  if (("URLPattern" in globalThis) == false) {
     await import("urlpattern-polyfill");
   }
 

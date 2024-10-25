@@ -5,7 +5,7 @@ import { getConfig, NodeAdapter } from "./node.ts";
 /** Bun server entry point */
 export const main = async () => {
   // Load polyfill if not supported natively
-  if (!globalThis.URLPattern) {
+  if (("URLPattern" in globalThis) == false) {
     await import("urlpattern-polyfill");
   }
 

@@ -87,7 +87,7 @@ export const main = async () => {
   const url = new URL(`http://${hostname}`);
   if (port) url.port = port;
 
-  let origin: URL = undefined;
+  let origin: URL | undefined = undefined;
   if (Deno.env.has("GGLFS_ORIGIN")) {
     origin = new URL(Deno.env.get("GGLFS_ORIGIN")!);
   }
