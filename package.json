@@ -1,11 +1,11 @@
 {
   "dependencies": {
-    "@dbushell/jsonlike": "npm:@jsr/dbushell__jsonlike",
-    "@std/encoding": "npm:@jsr/std__encoding",
+    "@dbushell/jsonlike": "^0.3.0",
+    "@std/encoding": "npm:@jsr/std__encoding@^1.0.5",
     "dotenv": "^16.4.5",
     "urlpattern-polyfill": "^10.0.0"
   },
   "devDependencies": {
-    "@types/node": "^20.14.11"
+    "@types/node": "^22.7.9"
   }
 }

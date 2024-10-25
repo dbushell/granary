@@ -6,11 +6,11 @@
     "node": "npx tsx main.ts"
   },
   "imports": {
-    "@dbushell/jsonlike": "jsr:@dbushell/jsonlike@0.2.2",
-    "@std/crypto": "jsr:@std/crypto@1.0.2",
-    "@std/dotenv": "jsr:@std/dotenv@0.225.0",
-    "@std/encoding": "jsr:@std/encoding@1.0.1",
-    "@std/fs": "jsr:@std/fs@1.0.0",
-    "@std/http": "jsr:@std/http@0.224.5"
+    "@dbushell/jsonlike": "jsr:@dbushell/jsonlike@^0.3.0",
+    "@std/crypto": "jsr:@std/crypto@^1.0.3",
+    "@std/dotenv": "jsr:@std/dotenv@^0.225.2",
+    "@std/encoding": "jsr:@std/encoding@^1.0.5",
+    "@std/fs": "jsr:@std/fs@^1.0.5",
+    "@std/http": "jsr:@std/http@^1.0.9"
   }
 }
