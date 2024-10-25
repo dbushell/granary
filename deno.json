@@ -12,5 +12,13 @@
     "@std/encoding": "jsr:@std/encoding@^1.0.5",
     "@std/fs": "jsr:@std/fs@^1.0.5",
     "@std/http": "jsr:@std/http@^1.0.9"
+  },
+  "fmt": {
+    "exclude": ["node_modules"],
+    "include": ["**/*.ts", "**/*.json"]
+  },
+  "lint": {
+    "exclude": ["node_modules"],
+    "include": ["**/*.ts"]
   }
 }

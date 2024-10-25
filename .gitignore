@@ -1,12 +1,12 @@
 /*
-!.gitignore
-!LICENSE
-!README.md
+/**/*.*
 !.env.example
+!.gitignore
 !.npmrc
 !deno.json
 !package.json
-!*.ts
+!LICENSE
+!README.md
+!main.ts
 !src
-src/**/*.*
 !src/**/*.ts

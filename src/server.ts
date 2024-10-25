@@ -3,12 +3,18 @@ import type {
   BatchResponseObject,
   BatchServerOptions,
   LFSFile,
-  LFSObject
-} from './types.ts';
-import {parseAuthorization} from './authorization.ts';
-import {parseRequest, parseVerify} from './request.ts';
-import {BatchStore} from './store.ts';
-import {acceptError, joinURL, jsonResponse, methodError, validateId} from './utils.ts';
+  LFSObject,
+} from "./types.ts";
+import { parseAuthorization } from "./authorization.ts";
+import { parseRequest, parseVerify } from "./request.ts";
+import { BatchStore } from "./store.ts";
+import {
+  acceptError,
+  joinURL,
+  jsonResponse,
+  methodError,
+  validateId,
+} from "./utils.ts";
 
 /**
  * Git LFS server clas
@@ -24,8 +30,8 @@ export class BatchServer {
 
   constructor(options: BatchServerOptions) {
     this.#adapter = options.adapter;
-    this.#username = options.username ?? '';
-    this.#password = options.password ?? '';
+    this.#username = options.username ?? "";
+    this.#password = options.password ?? "";
     this.#store = new BatchStore();
     this.#url = options.url;
     // Differs if behind HTTPS proxy
@@ -36,7 +42,7 @@ export class BatchServer {
       `+----------`,
       `\n+  Local: ${this.#url.href}`,
       `\n+ Origin: ${this.#origin.href}`,
-      `\n+----------`
+      `\n+----------`,
     );
   }
 
@@ -44,72 +50,78 @@ export class BatchServer {
     // Validate URL (bad adapter)
     const url = URL.parse(request.url);
     if (!url) {
-      return new Response(null, {status: 400});
+      return new Response(null, { status: 400 });
     }
 
     // Modify request for reverse proxies
     if (this.#origin.href !== this.#url.href) {
-      if (request.headers.has('x-forwarded-host')) {
-        url.host = request.headers.get('x-forwarded-host') ?? '';
+      if (request.headers.has("x-forwarded-host")) {
+        url.host = request.headers.get("x-forwarded-host") ?? "";
       }
-      if (request.headers.has('x-forwarded-proto')) {
-        url.protocol = request.headers.get('x-forwarded-proto') ?? '';
+      if (request.headers.has("x-forwarded-proto")) {
+        url.protocol = request.headers.get("x-forwarded-proto") ?? "";
       }
       request = new Request(url, {
         method: request.method,
         headers: request.headers,
-        body: request.body
+        body: request.body,
       });
-      if (this.#origin.hostname !== url.hostname || this.#origin.protocol !== url.protocol) {
-        return new Response(null, {status: 404});
+      if (
+        this.#origin.hostname !== url.hostname ||
+        this.#origin.protocol !== url.protocol
+      ) {
+        return new Response(null, { status: 404 });
       }
     }
 
     // Handle Batch API
-    const batchPathname = '/:repo([a-zA-Z0-9._-]+)/objects/batch';
-    const batchMatch = new URLPattern({pathname: batchPathname}).exec(url);
+    const batchPathname = "/:repo([a-zA-Z0-9._-]+)/objects/batch";
+    const batchMatch = new URLPattern({ pathname: batchPathname }).exec(url);
     if (batchMatch) {
       const repo = batchMatch.pathname.groups.repo!;
       return this.#batch(request, repo);
     }
 
     // Handle transfer operations
-    const repoPathname = '/:repo([a-zA-Z0-9._-]+)/:operation/:uuid([0-9a-f-]{36})';
-    const repoMatch = new URLPattern({pathname: repoPathname}).exec(request.url);
+    const repoPathname =
+      "/:repo([a-zA-Z0-9._-]+)/:operation/:uuid([0-9a-f-]{36})";
+    const repoMatch = new URLPattern({ pathname: repoPathname }).exec(
+      request.url,
+    );
     if (repoMatch) {
-      const {repo, operation, uuid} = repoMatch.pathname.groups;
+      const { repo, operation, uuid } = repoMatch.pathname.groups;
       const key = `${operation}/${uuid}`;
       const valid = validateId(uuid!) && this.#store.has(key);
       if (repo && valid) {
         switch (operation) {
-          case 'download':
+          case "download":
             return this.#download(request, repo, key);
-          case 'upload':
+          case "upload":
             return this.#upload(request, repo, key);
-          case 'verify':
+          case "verify":
             return this.#verify(request, repo, key);
         }
       }
     }
 
-    return new Response(null, {status: 404});
+    return new Response(null, { status: 404 });
   }
 
   /** Return object with file path */
   #getFile(object: LFSObject, repo: string): LFSFile {
-    const {oid, size} = object;
-    const {pathname} = joinURL(`${repo}/${object.oid}`, this.#fsRoot);
+    const { oid, size } = object;
+    const { pathname } = joinURL(`${repo}/${object.oid}`, this.#fsRoot);
     return {
       oid,
       pathname,
       repo,
-      size
+      size,
     };
   }
 
   /** Handle requests to `/objects/batch` */
   async #batch(request: Request, repo: string): Promise<Response> {
-    const methodErr = methodError(request, 'POST');
+    const methodErr = methodError(request, "POST");
     if (methodErr) return methodErr;
 
     const acceptErr = acceptError(request);
@@ -117,40 +129,43 @@ export class BatchServer {
 
     // Validate basic HTTP auth
     const credentials = parseAuthorization(request);
-    if (credentials?.username !== this.#username || credentials?.password !== this.#password) {
-      return jsonResponse(401, {message: 'Invalid credentials'});
+    if (
+      credentials?.username !== this.#username ||
+      credentials?.password !== this.#password
+    ) {
+      return jsonResponse(401, { message: "Invalid credentials" });
     }
 
     // Parse request payload
     const body = await parseRequest(request);
     if (!body) {
-      return jsonResponse(422, {message: 'Invalid objects'});
+      return jsonResponse(422, { message: "Invalid objects" });
     }
-    if (!['download', 'upload'].includes(body?.operation)) {
-      return jsonResponse(400, {message: 'Unknown operation'});
+    if (!["download", "upload"].includes(body?.operation)) {
+      return jsonResponse(400, { message: "Unknown operation" });
     }
 
     // Generate response payload
     const json = this.#store.respond(body, joinURL(repo, this.#origin));
 
     // Replace missing download objects with error
-    if (body.operation === 'download') {
+    if (body.operation === "download") {
       const checks: Array<Promise<void>> = [];
       for (let i = 0; i < json.objects.length; i++) {
-        const {oid, size, pathname} = this.#getFile(json.objects[i], repo);
+        const { oid, size, pathname } = this.#getFile(json.objects[i], repo);
         checks.push(
-          this.#adapter.check({oid, size, pathname, repo}).then((exists) => {
+          this.#adapter.check({ oid, size, pathname, repo }).then((exists) => {
             if (exists) return;
             json.objects[i] = {
               oid,
               size,
               error: {
                 code: 404,
-                message: 'Object does not exist'
-              }
+                message: "Object does not exist",
+              },
               // @todo fix forced type
             } as BatchResponseObject;
-          })
+          }),
         );
       }
       await Promise.all(checks);
@@ -160,8 +175,12 @@ export class BatchServer {
   }
 
   /** Handle requests to `/download/:uuid` */
-  #download(request: Request, repo: string, key: string): Promise<Response> | Response {
-    const methodErr = methodError(request, 'GET');
+  #download(
+    request: Request,
+    repo: string,
+    key: string,
+  ): Promise<Response> | Response {
+    const methodErr = methodError(request, "GET");
     if (methodErr) return methodErr;
 
     const transfer = this.#store.get(key)!;
@@ -169,17 +188,22 @@ export class BatchServer {
 
     // Check bearer token in header
     if (
-      request.headers.get('authorization') !== transfer.actions?.download?.header?.['authorization']
+      request.headers.get("authorization") !==
+        transfer.actions?.download?.header?.["authorization"]
     ) {
-      return jsonResponse(401, {message: 'Invalid token'});
+      return jsonResponse(401, { message: "Invalid token" });
     }
 
     return this.#adapter.download(this.#getFile(transfer, repo), request);
   }
 
   /** Handle requests to `/upload/:uuid` */
-  #upload(request: Request, repo: string, key: string): Promise<Response> | Response {
-    const methodErr = methodError(request, 'PUT');
+  #upload(
+    request: Request,
+    repo: string,
+    key: string,
+  ): Promise<Response> | Response {
+    const methodErr = methodError(request, "PUT");
     if (methodErr) return methodErr;
 
     const transfer = this.#store.get(key)!;
@@ -187,22 +211,30 @@ export class BatchServer {
 
     // Check bearer token in header
     if (
-      request.headers.get('authorization') !== transfer.actions?.upload?.header?.['authorization']
+      request.headers.get("authorization") !==
+        transfer.actions?.upload?.header?.["authorization"]
     ) {
-      return jsonResponse(401, {message: 'Invalid token'});
+      return jsonResponse(401, { message: "Invalid token" });
     }
 
     // Check content length matches
-    if (!request.body || request.headers.get('content-length') !== transfer.size.toString()) {
-      return jsonResponse(400, {message: 'Invalid upload'});
+    if (
+      !request.body ||
+      request.headers.get("content-length") !== transfer.size.toString()
+    ) {
+      return jsonResponse(400, { message: "Invalid upload" });
     }
 
     return this.#adapter.upload(this.#getFile(transfer, repo), request);
   }
 
   /** Handle requests to `/verify/:uuid` */
-  async #verify(request: Request, repo: string, key: string): Promise<Response> {
-    const methodErr = methodError(request, 'POST');
+  async #verify(
+    request: Request,
+    repo: string,
+    key: string,
+  ): Promise<Response> {
+    const methodErr = methodError(request, "POST");
     if (methodErr) return methodErr;
 
     const acceptErr = acceptError(request);
@@ -213,21 +245,22 @@ export class BatchServer {
 
     // Check bearer token in header
     if (
-      request.headers.get('authorization') !== transfer.actions?.verify?.header?.['authorization']
+      request.headers.get("authorization") !==
+        transfer.actions?.verify?.header?.["authorization"]
     ) {
-      return jsonResponse(401, {message: 'Invalid token'});
+      return jsonResponse(401, { message: "Invalid token" });
     }
 
     // Parse request payload
     const object = await parseVerify(request);
     if (!object) {
-      return jsonResponse(422, {message: 'Invalid object'});
+      return jsonResponse(422, { message: "Invalid object" });
     }
 
     if (await this.#adapter.check(this.#getFile(transfer, repo))) {
-      return new Response(null, {status: 200});
+      return new Response(null, { status: 200 });
     }
 
-    return jsonResponse(404, {message: 'Object not found'});
+    return jsonResponse(404, { message: "Object not found" });
   }
 }

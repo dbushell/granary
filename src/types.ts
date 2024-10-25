@@ -2,7 +2,7 @@
  * HTTP basic authentication credentials
  * @see {@link https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Authorization}
  */
-export type Credentials = {username: string; password: string};
+export type Credentials = { username: string; password: string };
 
 /** Git LFS object */
 export type LFSObject = {
@@ -31,7 +31,7 @@ export type BatchResponseError = {
 
 /** Batch response object with actions or error */
 export type BatchResponseObject = LFSObject & {
-  actions: Record<'download' | 'upload' | 'verify', BatchResponseAction>;
+  actions: Record<"download" | "upload" | "verify", BatchResponseAction>;
   authenticated: boolean;
   error?: BatchResponseError;
 };
@@ -42,9 +42,9 @@ export type BatchResponseObject = LFSObject & {
  */
 export type BatchRequest = {
   objects: Array<LFSObject>;
-  operation: 'download' | 'upload' | 'verify';
+  operation: "download" | "upload" | "verify";
   hash_algo?: string;
-  ref?: {name: string};
+  ref?: { name: string };
   transfers?: Array<string>;
 };
 
@@ -55,7 +55,7 @@ export type BatchRequest = {
 export type BatchResponse = {
   hash_algo: string;
   objects: Array<BatchResponseObject>;
-  transfer: 'basic';
+  transfer: "basic";
 };
 
 /** Runtime adapter to handle file system APIs */

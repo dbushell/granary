@@ -2,10 +2,10 @@ import type {
   BatchRequest,
   BatchResponse,
   BatchResponseAction,
-  BatchResponseObject
-} from './types.ts';
-import {encodeHex} from '@std/encoding';
-import {joinURL} from './utils.ts';
+  BatchResponseObject,
+} from "./types.ts";
+import { encodeHex } from "@std/encoding";
+import { joinURL } from "./utils.ts";
 
 /**
  * Map transfer actions by key and expiry date
@@ -49,7 +49,7 @@ export class BatchStore {
   /** Returns `true` if object key expired or does not exist */
   expired(key: string): boolean {
     const object = this.#store.get(key);
-    if (!object || !('actions' in object)) {
+    if (!object || !("actions" in object)) {
       return true;
     }
     const date = this.#dates.get(key);
@@ -65,48 +65,48 @@ export class BatchStore {
   /** Create response JSON for Git LFS Batch API request */
   respond(request: BatchRequest, url: URL): BatchResponse {
     return {
-      hash_algo: 'sha256',
-      objects: request.objects.map(({oid, size}) => {
-        const {key, action} = BatchStore.action(request.operation, url);
+      hash_algo: "sha256",
+      objects: request.objects.map(({ oid, size }) => {
+        const { key, action } = BatchStore.action(request.operation, url);
         const object: BatchResponseObject = {
           authenticated: true,
           actions: {
-            [request.operation]: action
+            [request.operation]: action,
             // @todo fix forced type
-          } as BatchResponseObject['actions'],
+          } as BatchResponseObject["actions"],
           oid,
-          size
+          size,
         };
         this.set(key, object);
         // Add additional `verify` action for upload operations
-        if (request.operation === 'upload') {
-          const {key, action} = BatchStore.action('verify', url);
+        if (request.operation === "upload") {
+          const { key, action } = BatchStore.action("verify", url);
           object.actions.verify = action;
           this.set(key, object);
         }
         return object;
       }),
-      transfer: 'basic'
+      transfer: "basic",
     };
   }
 
   /** Create an action with random ID and token */
   static action(
-    operation: BatchRequest['operation'],
-    url: URL
-  ): {key: string; action: BatchResponseAction} {
+    operation: BatchRequest["operation"],
+    url: URL,
+  ): { key: string; action: BatchResponseAction } {
     const token = encodeHex(crypto.getRandomValues(new Uint8Array(16)));
     const key = `${operation}/${crypto.randomUUID()}`;
-    const {href} = joinURL(key, url);
+    const { href } = joinURL(key, url);
     return {
       key,
       action: {
         expires_in: BatchStore.EXPIRES_IN,
         header: {
-          authorization: `Bearer ${token}`
+          authorization: `Bearer ${token}`,
         },
-        href
-      }
+        href,
+      },
     };
   }
 }

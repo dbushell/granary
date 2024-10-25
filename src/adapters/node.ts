@@ -1,9 +1,14 @@
-import type {BatchAdapter, LFSFile} from '../types.ts';
-import dotenv from 'dotenv';
-import {createServer} from 'node:http';
-import {createReadStream, createWriteStream, mkdirSync, statSync} from 'node:fs';
-import {dirname} from 'node:path';
-import {BatchServer} from '../server.ts';
+import type { BatchAdapter, LFSFile } from "../types.ts";
+import dotenv from "dotenv";
+import { createServer } from "node:http";
+import {
+  createReadStream,
+  createWriteStream,
+  mkdirSync,
+  statSync,
+} from "node:fs";
+import { dirname } from "node:path";
+import { BatchServer } from "../server.ts";
 
 /**
  * Node adapter (minimum viable implementation)
@@ -21,18 +26,18 @@ export class NodeAdapter implements BatchAdapter {
     const stream = createReadStream(object.pathname);
     const body = new ReadableStream({
       start(controller) {
-        stream.on('data', (chunk) => controller.enqueue(chunk));
-        stream.on('error', (err) => controller.error(err));
-        stream.on('end', () => controller.close());
+        stream.on("data", (chunk) => controller.enqueue(chunk));
+        stream.on("error", (err) => controller.error(err));
+        stream.on("end", () => controller.close());
       },
       cancel() {
         stream.destroy();
-      }
+      },
     });
     return new Response(body);
   }
   async upload(object: LFSFile, request: Request): Promise<Response> {
-    mkdirSync(dirname(object.pathname), {recursive: true});
+    mkdirSync(dirname(object.pathname), { recursive: true });
     const stream = createWriteStream(object.pathname);
     const reader = request.body!.getReader();
     while (true) {
@@ -45,7 +50,7 @@ export class NodeAdapter implements BatchAdapter {
         break;
       }
     }
-    return new Response(null, {status: 200});
+    return new Response(null, { status: 200 });
   }
 }
 
@@ -62,8 +67,8 @@ export const getConfig = () => {
   }
 
   // Configure server URL
-  const hostname = process.env.GGLFS_HOSTNAME ?? 'localhost';
-  const port = process.env.GGLFS_PORT ?? '8000';
+  const hostname = process.env.GGLFS_HOSTNAME ?? "localhost";
+  const port = process.env.GGLFS_PORT ?? "8000";
   const url = new URL(`http://${hostname}`);
   if (port) url.port = port;
 
@@ -72,22 +77,22 @@ export const getConfig = () => {
     origin = new URL(process.env.GGLFS_ORIGIN);
   }
 
-  return {fsRoot, origin, url};
+  return { fsRoot, origin, url };
 };
 
 /** Node server entry point */
 export const main = async () => {
   // Load polyfill if not supported natively
   if (!globalThis.URLPattern) {
-    await import('urlpattern-polyfill');
+    await import("urlpattern-polyfill");
   }
 
   // Import ponyfill from @hono/node-server
-  const {newRequest} = await import('./node-request.ts');
+  const { newRequest } = await import("./node-request.ts");
 
   // Load env variables
   dotenv.config();
-  const {fsRoot, origin, url} = getConfig();
+  const { fsRoot, origin, url } = getConfig();
 
   // Configure server
   const batchServer = new BatchServer({
@@ -96,7 +101,7 @@ export const main = async () => {
     fsRoot,
     adapter: new NodeAdapter(),
     username: process.env.GGLFS_USERNAME,
-    password: process.env.GGLFS_PASSWORD
+    password: process.env.GGLFS_PASSWORD,
   });
 
   // Node uses non-standard objects
@@ -105,7 +110,11 @@ export const main = async () => {
     const request = newRequest(req);
     // Copy response status and headers
     const response = await batchServer.handle(request);
-    res.writeHead(response.status, response.statusText, Object.fromEntries(response.headers));
+    res.writeHead(
+      response.status,
+      response.statusText,
+      Object.fromEntries(response.headers),
+    );
     // Stream response body
     if (response.body) {
       const reader = response.body.getReader();
